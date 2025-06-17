@@ -1,0 +1,19 @@
+{
+  "timestamp": 1750003439141,
+  "operation": {
+    "id": "webapp:react:views",
+    "refs": {
+      "id": "UV_Landing",
+      "version": "1750003438665"
+    }
+  },
+  "projectId": "make-a-task-management-app",
+  "files": [
+    {
+      "path": "../../apps/make-a-task-management-app/vitereact/src/components/views/UV_Landing.tsx",
+      "type": "text",
+      "size": 2641,
+      "dependencies": false
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "timestamp": 1750001584037,
+  "operation": {
+    "id": "settings:config:package"
+  },
+  "projectId": "make-a-task-management-app",
+  "files": [
+    {
+      "path": "../../apps/make-a-task-management-app/backend/package.json",
+      "type": "text",
+      "size": 804,
+      "dependencies": true
+    },
+    {
+      "path": "../../apps/make-a-task-management-app/backend/.env",
+      "type": "text",
+      "size": 142,
+      "dependencies": false
+    }
+  ]
+}

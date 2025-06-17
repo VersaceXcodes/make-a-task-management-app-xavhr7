@@ -1,0 +1,1584 @@
+openapi: 3.0.0
+info:
+  title: TaskCraft API
+  version: "1.0"
+  description: REST API for TaskCraft task and project management application
+servers:
+  - url: http://localhost:3000
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    signup_request:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+        password:
+          type: string
+          format: password
+          description: User password
+        full_name:
+          type: string
+          description: Optional user full name
+    auth_response:
+      type: object
+      required:
+        - token
+        - user_profile
+        - user_setting
+      properties:
+        token:
+          type: string
+          description: JWT authentication token
+        user_profile:
+          $ref: "#/components/schemas/user_profile_response"
+        user_setting:
+          $ref: "#/components/schemas/user_setting_response"
+    login_request:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+        password:
+          type: string
+          format: password
+          description: User password
+    user_profile_response:
+      type: object
+      properties:
+        user_id:
+          type: string
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    user_setting_response:
+      type: object
+      properties:
+        dark_mode_enabled:
+          type: boolean
+        timezone_offset:
+          type: integer
+          description: Minutes offset from UTC
+        notif_in_app_enabled:
+          type: boolean
+        notif_push_enabled:
+          type: boolean
+    user_profile_update_request:
+      type: object
+      properties:
+        full_name:
+          type: string
+          description: User full name
+        dark_mode_enabled:
+          type: boolean
+        timezone_offset:
+          type: integer
+          description: Minutes offset from UTC
+        notif_in_app_enabled:
+          type: boolean
+        notif_push_enabled:
+          type: boolean
+    task_list_response:
+      type: object
+      required:
+        - task_list_id
+        - list_name
+        - is_active
+      properties:
+        task_list_id:
+          type: integer
+          description: Unique identifier for the task list
+        workspace_id:
+          type: integer
+          nullable: true
+          description: Workspace ID if list is shared
+        user_id:
+          type: string
+          nullable: true
+          description: Owner user ID if list is personal
+        list_name:
+          type: string
+          description: Name of the task list
+        position_order:
+          type: integer
+          description: Manual ordering index
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+        incomplete_task_count:
+          type: integer
+          description: Number of incomplete tasks in list
+    create_task_list_request:
+      type: object
+      required:
+        - list_name
+      properties:
+        list_name:
+          type: string
+        workspace_id:
+          type: integer
+          nullable: true
+          description: Workspace ID if team list
+        user_id:
+          type: string
+          nullable: true
+          description: User ID if personal list
+        position_order:
+          type: integer
+          description: Manual position (optional)
+    update_task_list_request:
+      type: object
+      properties:
+        list_name:
+          type: string
+        position_order:
+          type: integer
+        is_active:
+          type: boolean
+          description: Soft delete flag
+    task_response:
+      type: object
+      required:
+        - task_id
+        - task_list_id
+        - title
+        - priority
+        - status
+        - is_completed
+        - is_active
+        - position_order
+      properties:
+        task_id:
+          type: integer
+        task_list_id:
+          type: integer
+        parent_task_id:
+          type: integer
+          nullable: true
+          description: ID of parent task if subtask
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          enum:
+            - Low
+            - Medium
+            - High
+          default: Medium
+        due_datetime:
+          type: string
+          format: date-time
+          nullable: true
+        estimated_effort_mins:
+          type: integer
+          nullable: true
+          description: Estimated effort in minutes
+        status:
+          type: string
+          enum:
+            - Pending
+            - In Progress
+            - Completed
+          default: Pending
+        created_by_user_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_completed:
+          type: boolean
+        position_order:
+          type: integer
+        is_active:
+          type: boolean
+        recurring_pattern:
+          type: string
+          description: JSON encoded recurrence rules
+          nullable: true
+        recurrence_end_date:
+          type: string
+          format: date-time
+          nullable: true
+        recurrence_count:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/tag_response"
+        assigned_users:
+          type: array
+          items:
+            $ref: "#/components/schemas/user_assignment_response"
+    create_task_request:
+      type: object
+      required:
+        - task_list_id
+        - title
+      properties:
+        task_list_id:
+          type: integer
+        parent_task_id:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          enum:
+            - Low
+            - Medium
+            - High
+          default: Medium
+        due_datetime:
+          type: string
+          format: date-time
+          nullable: true
+        estimated_effort_mins:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum:
+            - Pending
+            - In Progress
+            - Completed
+          default: Pending
+        recurring_pattern:
+          type: string
+          nullable: true
+          description: JSON string encoding recurrence rules
+        recurrence_end_date:
+          type: string
+          format: date-time
+          nullable: true
+        recurrence_count:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            oneOf:
+              - type: integer
+              - type: string
+          description: List of tag IDs or new tag names
+        assigned_user_ids:
+          type: array
+          items:
+            type: string
+          description: List of user IDs to assign task
+    update_task_request:
+      type: object
+      properties:
+        parent_task_id:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        priority:
+          type: string
+          enum:
+            - Low
+            - Medium
+            - High
+        due_datetime:
+          type: string
+          format: date-time
+          nullable: true
+        estimated_effort_mins:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum:
+            - Pending
+            - In Progress
+            - Completed
+        is_completed:
+          type: boolean
+        position_order:
+          type: integer
+        is_active:
+          type: boolean
+        recurring_pattern:
+          type: string
+          nullable: true
+        recurrence_end_date:
+          type: string
+          format: date-time
+          nullable: true
+        recurrence_count:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            oneOf:
+              - type: integer
+              - type: string
+          description: List of tag IDs or new tag names
+        assigned_user_ids:
+          type: array
+          items:
+            type: string
+    user_assignment_response:
+      type: object
+      properties:
+        user_id:
+          type: string
+        full_name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+    tag_response:
+      type: object
+      required:
+        - tag_id
+        - tag_name
+        - is_active
+      properties:
+        tag_id:
+          type: integer
+        workspace_id:
+          type: integer
+          nullable: true
+        user_id:
+          type: string
+          nullable: true
+        tag_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+    create_tag_request:
+      type: object
+      required:
+        - tag_name
+      properties:
+        tag_name:
+          type: string
+        workspace_id:
+          type: integer
+          nullable: true
+        user_id:
+          type: string
+          nullable: true
+    update_tag_request:
+      type: object
+      properties:
+        tag_name:
+          type: string
+        is_active:
+          type: boolean
+    reminder_response:
+      type: object
+      required:
+        - reminder_id
+        - task_id
+        - reminder_datetime
+        - reminder_type
+        - is_active
+      properties:
+        reminder_id:
+          type: integer
+        task_id:
+          type: integer
+        reminder_datetime:
+          type: string
+          format: date-time
+        reminder_type:
+          type: string
+          enum:
+            - in-app
+            - push
+            - email
+        created_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+    create_reminder_request:
+      type: object
+      required:
+        - reminder_datetime
+        - reminder_type
+      properties:
+        reminder_datetime:
+          type: string
+          format: date-time
+        reminder_type:
+          type: string
+          enum:
+            - in-app
+            - push
+            - email
+    task_comment_response:
+      type: object
+      required:
+        - comment_id
+        - task_id
+        - user_id
+        - content
+        - created_at
+        - is_deleted
+      properties:
+        comment_id:
+          type: integer
+        task_id:
+          type: integer
+        user_id:
+          type: string
+        parent_comment_id:
+          type: integer
+          nullable: true
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_deleted:
+          type: boolean
+    create_comment_request:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+        parent_comment_id:
+          type: integer
+          nullable: true
+    update_comment_request:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+    activity_log_response:
+      type: object
+      required:
+        - activity_id
+        - user_id
+        - activity_type
+        - created_at
+      properties:
+        activity_id:
+          type: integer
+        workspace_id:
+          type: integer
+          nullable: true
+        task_id:
+          type: integer
+          nullable: true
+        user_id:
+          type: string
+        activity_type:
+          type: string
+          description: Enum of activity types (e.g., 'task_created', 'comment_added')
+        details:
+          type: string
+          nullable: true
+          description: JSON or text detail about the activity
+        created_at:
+          type: string
+          format: date-time
+    notification_response:
+      type: object
+      required:
+        - notification_id
+        - user_id
+        - notification_type
+        - content
+        - is_read
+        - created_at
+      properties:
+        notification_id:
+          type: integer
+        user_id:
+          type: string
+        related_task_id:
+          type: integer
+          nullable: true
+        notification_type:
+          type: string
+          enum:
+            - reminder
+            - assignment
+            - comment
+            - status_change
+        content:
+          type: string
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    mark_notification_read_request:
+      type: object
+      required:
+        - is_read
+      properties:
+        is_read:
+          type: boolean
+    undo_request:
+      type: object
+      required:
+        - undo_id
+      properties:
+        undo_id:
+          type: integer
+    bulk_update_request:
+      type: object
+      required:
+        - task_ids
+      properties:
+        task_ids:
+          type: array
+          items:
+            type: integer
+        status:
+          type: string
+          enum:
+            - Pending
+            - In Progress
+            - Completed
+          nullable: true
+        is_completed:
+          type: boolean
+          nullable: true
+        is_active:
+          type: boolean
+          nullable: true
+        add_tag_ids:
+          type: array
+          items:
+            type: integer
+          nullable: true
+        remove_tag_ids:
+          type: array
+          items:
+            type: integer
+          nullable: true
+        assign_user_ids:
+          type: array
+          items:
+            type: string
+          nullable: true
+        unassign_user_ids:
+          type: array
+          items:
+            type: string
+          nullable: true
+paths:
+  /auth/signup:
+    post:
+      summary: Create a new user account
+      operationId: auth_signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/signup_request"
+      responses:
+        "201":
+          description: User created successfully with authentication token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/auth_response"
+        "400":
+          description: Invalid input or email already in use
+  /auth/login:
+    post:
+      summary: User login and receive JWT token and profile data
+      operationId: auth_login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/login_request"
+      responses:
+        "200":
+          description: Successful login with token and profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/auth_response"
+        "401":
+          description: Unauthorized - invalid credentials
+  /auth/logout:
+    post:
+      summary: Logout user (token invalidation is client-side)
+      operationId: auth_logout
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Successfully logged out
+  /user/profile:
+    get:
+      summary: Get current user's profile and settings
+      operationId: get_user_profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile and settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_profile:
+                    $ref: "#/components/schemas/user_profile_response"
+                  user_setting:
+                    $ref: "#/components/schemas/user_setting_response"
+        "401":
+          description: Unauthorized
+    put:
+      summary: Update current user's profile and preference settings
+      operationId: update_user_profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/user_profile_update_request"
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_profile:
+                    $ref: "#/components/schemas/user_profile_response"
+                  user_setting:
+                    $ref: "#/components/schemas/user_setting_response"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+  /task_lists:
+    get:
+      summary: Get all accessible task lists (personal and workspaces) for user
+      operationId: get_task_lists
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of task lists with incomplete task counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/task_list_response"
+        "401":
+          description: Unauthorized
+    post:
+      summary: Create a new task list (personal or workspace)
+      operationId: create_task_list
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/create_task_list_request"
+      responses:
+        "201":
+          description: Task list created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/task_list_response"
+        "400":
+          description: Validation error (e.g., missing list_name)
+        "401":
+          description: Unauthorized
+  /task_lists/{task_list_id}:
+    parameters:
+      - name: task_list_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the task list
+    put:
+      summary: Update an existing task list (rename, reorder, soft delete)
+      operationId: update_task_list
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/update_task_list_request"
+      responses:
+        "200":
+          description: Task list updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/task_list_response"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task list not found
+    delete:
+      summary: Soft delete a task list (with undo support)
+      operationId: delete_task_list
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Task list soft deleted successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task list not found
+  /tasks:
+    get:
+      summary: Get tasks with filtering and sorting for a task list
+      operationId: get_tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_list_id
+          in: query
+          schema:
+            type: integer
+          required: true
+          description: Filter tasks by task_list_id
+        - name: status
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - Pending
+                - In Progress
+                - Completed
+            nullable: true
+          style: form
+          explode: false
+          description: Filter by task status(es)
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+            nullable: true
+          style: form
+          explode: false
+          description: Filter by tag IDs
+        - name: assigned_user_ids
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+            nullable: true
+          style: form
+          explode: false
+          description: Filter by assigned user IDs
+        - name: due_date_start
+          in: query
+          schema:
+            type: string
+            format: date
+            nullable: true
+          description: Filter tasks due after or on this date (YYYY-MM-DD)
+        - name: due_date_end
+          in: query
+          schema:
+            type: string
+            format: date
+            nullable: true
+          description: Filter tasks due before or on this date (YYYY-MM-DD)
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - deadline
+              - priority
+              - created_at
+              - custom
+            default: custom
+          description: Sort tasks by specified attribute
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
+          description: Sort order ascending or descending
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Pagination page number
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+          description: Number of items per page
+      responses:
+        "200":
+          description: List of tasks in the list filtered and sorted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/task_response"
+                  total_count:
+                    type: integer
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
+        "400":
+          description: Invalid parameters
+        "401":
+          description: Unauthorized
+    post:
+      summary: Create a new task
+      operationId: create_task
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/create_task_request"
+      responses:
+        "201":
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/task_response"
+        "400":
+          description: Validation or permission error
+        "401":
+          description: Unauthorized
+  /tasks/{task_id}:
+    parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of a task
+    put:
+      summary: Update existing task (full or partial)
+      operationId: update_task
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/update_task_request"
+      responses:
+        "200":
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/task_response"
+        "400":
+          description: Validation or permission error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task not found
+    delete:
+      summary: Soft delete a task with undo support
+      operationId: delete_task
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Task soft deleted successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task not found
+  /tasks/{task_id}/assignments:
+    parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of a task
+    get:
+      summary: List users assigned to the task
+      operationId: get_task_assignments
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of assigned users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/user_assignment_response"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task not found
+    post:
+      summary: Assign multiple users to a task
+      operationId: assign_users_to_task
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_ids
+              properties:
+                user_ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Users assigned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/user_assignment_response"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task not found
+  /tasks/{task_id}/assignments/{user_id}:
+    parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      summary: Remove assignment of user on task
+      operationId: remove_task_assignment
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: User removed from task assignment successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task or user assignment not found
+  /tags:
+    get:
+      summary: Get tags scoped by workspace or user
+      operationId: get_tags
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workspace_id
+          in: query
+          schema:
+            type: integer
+            nullable: true
+          description: Workspace ID for team tags
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            nullable: true
+          description: User ID for personal tags
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+            nullable: true
+          description: Filter active tags only
+      responses:
+        "200":
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/tag_response"
+        "401":
+          description: Unauthorized
+    post:
+      summary: Create a new tag
+      operationId: create_tag
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/create_tag_request"
+      responses:
+        "201":
+          description: Tag created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tag_response"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+  /tags/{tag_id}:
+    parameters:
+      - name: tag_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      summary: Rename or soft delete a tag
+      operationId: update_tag
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/update_tag_request"
+      responses:
+        "200":
+          description: Tag updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tag_response"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Tag not found
+    delete:
+      summary: Soft delete a tag
+      operationId: delete_tag
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Tag soft deleted successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Tag not found
+  /tasks/{task_id}/tags:
+    parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      summary: Attach tags to a task
+      operationId: attach_tags_to_task
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tag_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        "200":
+          description: Tags attached successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/tag_response"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task not found
+  /tasks/{task_id}/tags/{tag_id}:
+    parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: tag_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    delete:
+      summary: Remove a tag from a task
+      operationId: remove_tag_from_task
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Tag removed from task
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task or tag not found
+  /tasks/{task_id}/reminders:
+    parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      summary: Create a reminder for a task
+      operationId: create_task_reminder
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/create_reminder_request"
+      responses:
+        "201":
+          description: Reminder created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/reminder_response"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+  /notifications:
+    get:
+      summary: Get current user's notifications
+      operationId: get_notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: is_read
+          in: query
+          schema:
+            type: boolean
+            nullable: true
+          description: Filter by read/unread status
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/notification_response"
+                  total_count:
+                    type: integer
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
+        "401":
+          description: Unauthorized
+  /notifications/{notification_id}/read:
+    parameters:
+      - name: notification_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      summary: Mark a notification as read/unread
+      operationId: mark_notification_read
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/mark_notification_read_request"
+      responses:
+        "200":
+          description: Notification read status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/notification_response"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Notification not found
+  /tasks/{task_id}/comments:
+    parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get threaded comments for a task
+      operationId: get_task_comments
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of task comments, ordered chronologically
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/task_comment_response"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task not found
+    post:
+      summary: Create a new comment on a task (threaded)
+      operationId: add_task_comment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/create_comment_request"
+      responses:
+        "201":
+          description: Comment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/task_comment_response"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+        "404":
+          description: Task not found
+  /tasks/comments/{comment_id}:
+    parameters:
+      - name: comment_id
+        in: path
+        required: true
+        schema:
+          type: integer
+    put:
+      summary: Edit an existing comment within allowed time
+      operationId: update_task_comment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/update_comment_request"
+      responses:
+        "200":
+          description: Comment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/task_comment_response"
+        "400":
+          description: Validation error or time expired
+        "401":
+          description: Unauthorized
+        "404":
+          description: Comment not found
+    delete:
+      summary: Soft delete a comment
+      operationId: delete_task_comment
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Comment soft deleted successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Comment not found
+  /activity_logs:
+    get:
+      summary: Get activity logs filtered by workspace or task
+      operationId: get_activity_logs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workspace_id
+          in: query
+          schema:
+            type: integer
+            nullable: true
+        - name: task_id
+          in: query
+          schema:
+            type: integer
+            nullable: true
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: Activity log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activities:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/activity_log_response"
+                  total_count:
+                    type: integer
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
+        "401":
+          description: Unauthorized
+  /undo:
+    post:
+      summary: Perform an undo operation from undo log entry
+      operationId: undo_action
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/undo_request"
+      responses:
+        "200":
+          description: Undo performed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  restored_entity:
+                    type: object
+                    description: JSON snapshot of restored data
+        "400":
+          description: Invalid undo ID or expired
+        "401":
+          description: Unauthorized
+        "404":
+          description: Undo entry not found
+  /tasks/bulk_update:
+    post:
+      summary: Bulk update of multiple tasks (status, tags, assignments, delete)
+      operationId: bulk_update_tasks
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/bulk_update_request"
+      responses:
+        "200":
+          description: Bulk update success with updated tasks list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated_tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/task_response"
+        "400":
+          description: Invalid input or permission error
+        "401":
+          description: Unauthorized
+  /search/tasks:
+    get:
+      summary: Search tasks within user's scope by keyword
+      operationId: search_tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          required: true
+          description: Search keyword in title and description
+        - name: workspace_id
+          in: query
+          schema:
+            type: integer
+            nullable: true
+          description: Workspace ID to limit scope
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: Search results with tasks matching query
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/task_response"
+                  total_count:
+                    type: integer
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
+        "400":
+          description: Missing or invalid query
+        "401":
+          description: Unauthorized

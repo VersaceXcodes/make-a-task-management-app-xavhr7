@@ -1,0 +1,577 @@
+asyncapi: 2.0.0
+info:
+  title: TaskCraft Real-time Events API
+  version: 1.0.0
+  description: |
+    AsyncAPI specification for TaskCraft backend real-time features.
+    Covers all websocket events for realtime collaboration, task updates,
+    comments, notifications, undo and activity logs with detailed schemas.
+servers:
+  production:
+    url: ws://localhost:3000/ws
+    protocol: websocket
+channels:
+  task_created:
+    description: >
+      Broadcast when a new task is created within a list or workspace accessible
+      to the user.
+    subscribe:
+      summary: Receive new task creation event
+      operationId: receive_task_created
+      message:
+        $ref: "#/components/messages/task_created"
+  task_updated:
+    description: >
+      Broadcast when a task is updated (fields, status, assignments, tags,
+      recurrence).
+    subscribe:
+      summary: Receive updated task data
+      operationId: receive_task_updated
+      message:
+        $ref: "#/components/messages/task_updated"
+  task_deleted:
+    description: |
+      Broadcast when a task is soft deleted.
+    subscribe:
+      summary: Receive soft delete task event
+      operationId: receive_task_deleted
+      message:
+        $ref: "#/components/messages/task_deleted"
+  task_assignment_changed:
+    description: |
+      Broadcast when assignment users for a task change.
+    subscribe:
+      summary: Receive task assignment changes
+      operationId: receive_task_assignment_changed
+      message:
+        $ref: "#/components/messages/task_assignment_changed"
+  comment_added:
+    description: |
+      Broadcast when a new comment is added to a task (threaded).
+    subscribe:
+      summary: Receive new comment event
+      operationId: receive_comment_added
+      message:
+        $ref: "#/components/messages/comment_added"
+  comment_updated:
+    description: |
+      Broadcast when a comment is updated.
+    subscribe:
+      summary: Receive comment update event
+      operationId: receive_comment_updated
+      message:
+        $ref: "#/components/messages/comment_updated"
+  comment_deleted:
+    description: |
+      Broadcast when a comment is soft deleted.
+    subscribe:
+      summary: Receive comment deletion event
+      operationId: receive_comment_deleted
+      message:
+        $ref: "#/components/messages/comment_deleted"
+  notification_received:
+    description: |
+      Real-time push of new notifications to users.
+    subscribe:
+      summary: Receive new notification event
+      operationId: receive_notification
+      message:
+        $ref: "#/components/messages/notification_received"
+  activity_log_updated:
+    description: |
+      Real-time feed updates with recent activity logs for tasks and projects.
+    subscribe:
+      summary: Receive new activity log entry
+      operationId: receive_activity_log_updated
+      message:
+        $ref: "#/components/messages/activity_log_updated"
+  undo_action_performed:
+    description: >
+      Notify clients that an undo operation has been performed and data restored.
+    subscribe:
+      summary: Receive undo action event
+      operationId: receive_undo_action_performed
+      message:
+        $ref: "#/components/messages/undo_action_performed"
+components:
+  messages:
+    task_created:
+      name: task_created
+      title: Task Created Event
+      payload:
+        $ref: "#/components/schemas/task_full"
+      headers:
+        type: object
+        required:
+          - authorization
+        properties:
+          authorization:
+            type: string
+            description: Bearer token for authentication
+    task_updated:
+      name: task_updated
+      title: Task Updated Event
+      payload:
+        type: object
+        required:
+          - task_id
+          - updated_fields
+          - assignments
+          - tags
+        properties:
+          task_id:
+            type: integer
+            description: Unique ID of updated task
+          updated_fields:
+            type: object
+            description: Partial task object with fields updated
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+              priority:
+                type: string
+                enum:
+                  - Low
+                  - Medium
+                  - High
+              due_datetime:
+                type: string
+                format: date-time
+                nullable: true
+              estimated_effort_mins:
+                type: integer
+                nullable: true
+              status:
+                type: string
+                enum:
+                  - Pending
+                  - In Progress
+                  - Completed
+              position_order:
+                type: integer
+              recurring_pattern:
+                type: string
+                nullable: true
+              recurrence_end_date:
+                type: string
+                format: date-time
+                nullable: true
+              recurrence_count:
+                type: integer
+                nullable: true
+          assignments:
+            type: array
+            description: Updated list of assigned user IDs
+            items:
+              type: string
+          tags:
+            type: array
+            description: Updated list of tag IDs
+            items:
+              type: integer
+      headers:
+        type: object
+        required:
+          - authorization
+        properties:
+          authorization:
+            type: string
+            description: Bearer token for authentication
+    task_deleted:
+      name: task_deleted
+      title: Task Deleted Event
+      payload:
+        type: object
+        required:
+          - task_id
+          - is_active
+        properties:
+          task_id:
+            type: integer
+            description: ID of the soft deleted task
+          is_active:
+            type: boolean
+            description: Soft delete flag (false means deleted)
+      headers:
+        type: object
+        required:
+          - authorization
+        properties:
+          authorization:
+            type: string
+            description: Bearer token for authentication
+    task_assignment_changed:
+      name: task_assignment_changed
+      title: Task Assignment Changed Event
+      payload:
+        type: object
+        required:
+          - task_id
+          - assigned_user_ids
+        properties:
+          task_id:
+            type: integer
+            description: Task identifier
+          assigned_user_ids:
+            type: array
+            items:
+              type: string
+            description: Current list of assigned user IDs
+      headers:
+        type: object
+        required:
+          - authorization
+        properties:
+          authorization:
+            type: string
+            description: Bearer token for authentication
+    comment_added:
+      name: comment_added
+      title: Comment Added Event
+      payload:
+        $ref: "#/components/schemas/comment"
+      headers:
+        type: object
+        required:
+          - authorization
+        properties:
+          authorization:
+            type: string
+            description: Bearer token for authentication
+    comment_updated:
+      name: comment_updated
+      title: Comment Updated Event
+      payload:
+        $ref: "#/components/schemas/comment_update"
+      headers:
+        type: object
+        required:
+          - authorization
+        properties:
+          authorization:
+            type: string
+            description: Bearer token for authentication
+    comment_deleted:
+      name: comment_deleted
+      title: Comment Deleted Event
+      payload:
+        type: object
+        required:
+          - comment_id
+          - is_deleted
+        properties:
+          comment_id:
+            type: integer
+            description: ID of the soft deleted comment
+          is_deleted:
+            type: boolean
+            description: Soft delete flag true means deleted
+      headers:
+        type: object
+        required:
+          - authorization
+        properties:
+          authorization:
+            type: string
+            description: Bearer token for authentication
+    notification_received:
+      name: notification_received
+      title: Notification Received Event
+      payload:
+        type: object
+        required:
+          - notification_id
+          - notification_type
+          - content
+          - created_at
+        properties:
+          notification_id:
+            type: integer
+            description: Unique notification ID
+          notification_type:
+            type: string
+            enum:
+              - reminder
+              - assignment
+              - comment
+              - status_change
+          content:
+            type: string
+            description: Notification message content
+          related_task_id:
+            type: integer
+            nullable: true
+            description: Optional related task ID
+          is_read:
+            type: boolean
+            default: false
+          created_at:
+            type: string
+            format: date-time
+            description: Creation timestamp UTC
+      headers:
+        type: object
+        required:
+          - authorization
+        properties:
+          authorization:
+            type: string
+            description: Bearer token for authentication
+    activity_log_updated:
+      name: activity_log_updated
+      title: Activity Log Updated Event
+      payload:
+        type: object
+        required:
+          - activity_id
+          - workspace_id
+          - user_id
+          - activity_type
+          - created_at
+        properties:
+          activity_id:
+            type: integer
+            description: Unique activity log entry ID
+          workspace_id:
+            type: integer
+            nullable: true
+            description: Workspace/project ID if applicable
+          task_id:
+            type: integer
+            nullable: true
+            description: Task ID if applicable
+          user_id:
+            type: string
+            description: User who performed action
+          activity_type:
+            type: string
+            enum:
+              - task_created
+              - task_updated
+              - task_completed
+              - comment_added
+              - assignment_changed
+              - due_date_changed
+              - task_deleted
+              - comment_updated
+              - comment_deleted
+              - task_assigned
+              - task_unassigned
+          details:
+            type: object
+            nullable: true
+            description: JSON object describing details of the event (old/new values)
+          created_at:
+            type: string
+            format: date-time
+            description: Timestamp of activity in UTC
+      headers:
+        type: object
+        required:
+          - authorization
+        properties:
+          authorization:
+            type: string
+            description: Bearer token for authentication
+    undo_action_performed:
+      name: undo_action_performed
+      title: Undo Action Performed Event
+      payload:
+        type: object
+        required:
+          - entity_type
+          - entity_id
+          - data_snapshot
+          - undone_by_user_id
+          - created_at
+        properties:
+          entity_type:
+            type: string
+            enum:
+              - task
+              - task_assignment
+              - task_list
+              - comment
+              - tag
+            description: Type of entity restored by undo
+          entity_id:
+            oneOf:
+              - type: integer
+              - type: string
+            description: ID of the entity restored
+          data_snapshot:
+            type: object
+            description: JSON snapshot of data restored to clients
+          undone_by_user_id:
+            type: string
+            description: User who performed the undo action
+          created_at:
+            type: string
+            format: date-time
+            description: Timestamp of undo action in UTC
+      headers:
+        type: object
+        required:
+          - authorization
+        properties:
+          authorization:
+            type: string
+            description: Bearer token for authentication
+  schemas:
+    task_full:
+      type: object
+      required:
+        - task_id
+        - task_list_id
+        - title
+        - priority
+        - status
+        - created_by_user_id
+        - created_at
+        - updated_at
+        - is_completed
+        - position_order
+        - is_active
+        - assignments
+        - tags
+      properties:
+        task_id:
+          type: integer
+          description: Unique task identifier
+        task_list_id:
+          type: integer
+          description: Parent task list ID
+        parent_task_id:
+          type: integer
+          nullable: true
+          description: Parent task ID if it's a subtask
+        title:
+          type: string
+          description: Task title
+        description:
+          type: string
+          nullable: true
+          description: Detailed task description
+        priority:
+          type: string
+          enum:
+            - Low
+            - Medium
+            - High
+          description: Priority level
+        due_datetime:
+          type: string
+          format: date-time
+          nullable: true
+          description: Due date/time in UTC
+        estimated_effort_mins:
+          type: integer
+          nullable: true
+          description: Estimated effort in minutes
+        status:
+          type: string
+          enum:
+            - Pending
+            - In Progress
+            - Completed
+          description: Task status
+        created_by_user_id:
+          type: string
+          description: Creator's user ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp UTC
+        updated_at:
+          type: string
+          format: date-time
+          description: Last updated timestamp UTC
+        is_completed:
+          type: boolean
+          description: True if task is completed
+        position_order:
+          type: integer
+          description: Manual ordering index in list
+        is_active:
+          type: boolean
+          description: Soft delete flag
+        recurring_pattern:
+          type: string
+          nullable: true
+          description: JSON string encoding recurrence rules
+        recurrence_end_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Recurrence end date
+        recurrence_count:
+          type: integer
+          nullable: true
+          description: Recurrence iterations count
+        assignments:
+          type: array
+          description: List of user IDs assigned to task
+          items:
+            type: string
+        tags:
+          type: array
+          description: List of tag IDs attached to task
+          items:
+            type: integer
+    comment:
+      type: object
+      required:
+        - comment_id
+        - task_id
+        - user_id
+        - content
+        - created_at
+        - is_deleted
+      properties:
+        comment_id:
+          type: integer
+          description: Unique comment identifier
+        task_id:
+          type: integer
+          description: Task the comment belongs to
+        user_id:
+          type: string
+          description: User ID of comment author
+        parent_comment_id:
+          type: integer
+          nullable: true
+          description: Parent comment ID for threaded replies
+        content:
+          type: string
+          description: Comment text content
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp UTC
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last updated timestamp UTC if edited
+        is_deleted:
+          type: boolean
+          description: Soft deletion flag
+    comment_update:
+      type: object
+      required:
+        - comment_id
+        - content
+        - updated_at
+      properties:
+        comment_id:
+          type: integer
+          description: Unique comment ID
+        content:
+          type: string
+          description: Updated comment content
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp of edit UTC

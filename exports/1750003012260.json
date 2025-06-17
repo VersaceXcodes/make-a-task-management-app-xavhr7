@@ -1,0 +1,19 @@
+{
+  "timestamp": 1750003012260,
+  "operation": {
+    "id": "webapp:react:views",
+    "refs": {
+      "id": "UV_Task_Edit",
+      "version": "latest"
+    }
+  },
+  "projectId": "make-a-task-management-app",
+  "files": [
+    {
+      "path": "../../apps/make-a-task-management-app/vitereact/src/components/views/UV_Task_Edit.tsx",
+      "type": "text",
+      "size": 11233,
+      "dependencies": false
+    }
+  ]
+}

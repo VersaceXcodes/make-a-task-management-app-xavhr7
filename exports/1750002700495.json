@@ -1,0 +1,19 @@
+{
+  "timestamp": 1750002700495,
+  "operation": {
+    "id": "webapp:react:views",
+    "refs": {
+      "id": "UV_Password_Reset",
+      "version": "latest"
+    }
+  },
+  "projectId": "make-a-task-management-app",
+  "files": [
+    {
+      "path": "../../apps/make-a-task-management-app/vitereact/src/components/views/UV_Password_Reset.tsx",
+      "type": "text",
+      "size": 3258,
+      "dependencies": false
+    }
+  ]
+}

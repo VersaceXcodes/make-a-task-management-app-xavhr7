@@ -1,0 +1,15 @@
+{
+  "timestamp": 1750000764034,
+  "operation": {
+    "id": "db:postgres"
+  },
+  "projectId": "make-a-task-management-app",
+  "files": [
+    {
+      "path": "../../apps/make-a-task-management-app/backend/db.sql",
+      "type": "text",
+      "size": 8710,
+      "dependencies": false
+    }
+  ]
+}

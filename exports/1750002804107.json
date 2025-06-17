@@ -1,0 +1,19 @@
+{
+  "timestamp": 1750002804107,
+  "operation": {
+    "id": "webapp:react:views",
+    "refs": {
+      "id": "UV_Task_Kanban",
+      "version": "latest"
+    }
+  },
+  "projectId": "make-a-task-management-app",
+  "files": [
+    {
+      "path": "../../apps/make-a-task-management-app/vitereact/src/components/views/UV_Task_Kanban.tsx",
+      "type": "text",
+      "size": 9558,
+      "dependencies": false
+    }
+  ]
+}
